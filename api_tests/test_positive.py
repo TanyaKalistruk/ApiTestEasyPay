@@ -1,8 +1,8 @@
 import allure
 import requests
 
+from api_tests import db_checking
 from api_tests.params import Urls, Json, Par
-from api_tests.db import DBConnection
 from api_tests.login import Login
 
 
@@ -13,8 +13,7 @@ def test_change_price():
     with allure.step('It is valid price'):
         assert 200 <= status.status_code < 300
     with allure.step('Db updated'):
-        with DBConnection() as db:
-            assert db.check_price() == 1
+        assert db_checking.new_price() == 1
 
 
 def test_delete_inspector():
@@ -24,17 +23,15 @@ def test_delete_inspector():
     with allure.step('It is valid id for inspector'):
         assert 200 <= status.status_code < 300
     with allure.step('Db updated'):
-        with DBConnection() as db:
-            assert db.check_delete_inspector() == 0
+        assert db_checking.present_inspector() == 0
 
 
 def test_add_inspector():
-    with DBConnection() as db:
-        if db.check_delete_inspector() == 0:
-            cookie_login = Login.login_manager()
-            status = requests.request('PUT', Urls.url_add_inspector,
-                                      json=Par.id_add, cookies=cookie_login)
-            with allure.step('It is valid id for inspector'):
-                assert 200 <= status.status_code < 300
-            with allure.step('Db updated'):
-                assert db.check_delete_inspector() == 1
+    if db_checking.present_inspector() == 0:
+        cookie_login = Login.login_manager()
+        status = requests.request('PUT', Urls.url_add_inspector,
+                                  json=Par.id_add, cookies=cookie_login)
+        with allure.step('It is valid id for inspector'):
+            assert 200 <= status.status_code < 300
+        with allure.step('Db updated'):
+            assert db_checking.present_inspector() == 1
